@@ -18,6 +18,7 @@ final class PanelWindow: NSWindow {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: PanelWindow?
+    private var statusItem: NSStatusItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let content = NSHostingController(rootView: DeskletView())
@@ -42,10 +43,71 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.makeKeyAndOrderFront(nil)
         window = panel
         PanelController.shared.window = panel
+        setupStatusItem()
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         window?.makeKeyAndOrderFront(nil)
         return true
+    }
+
+    private func setupStatusItem() {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        item.button?.image = NSImage(systemSymbolName: "checklist", accessibilityDescription: "QuickRappel")
+        let menu = NSMenu()
+        menu.delegate = self
+        item.menu = menu
+        statusItem = item
+    }
+
+    @objc private func togglePanel() {
+        guard let window else { return }
+        if window.isVisible {
+            window.orderOut(nil)
+        } else {
+            window.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    @objc private func toggleLock() {
+        PanelController.shared.locked.toggle()
+    }
+
+    @objc private func quit() {
+        NSApp.terminate(nil)
+    }
+}
+
+extension AppDelegate: NSMenuDelegate {
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+
+        let visible = window?.isVisible ?? false
+        let toggleItem = NSMenuItem(
+            title: visible ? "Masquer le panneau" : "Afficher le panneau",
+            action: #selector(togglePanel),
+            keyEquivalent: ""
+        )
+        toggleItem.target = self
+        menu.addItem(toggleItem)
+
+        let lockItem = NSMenuItem(
+            title: "Verrouiller la position",
+            action: #selector(toggleLock),
+            keyEquivalent: ""
+        )
+        lockItem.target = self
+        lockItem.state = PanelController.shared.locked ? .on : .off
+        menu.addItem(lockItem)
+
+        menu.addItem(.separator())
+
+        let quitItem = NSMenuItem(
+            title: "Quitter QuickRappel",
+            action: #selector(quit),
+            keyEquivalent: "q"
+        )
+        quitItem.target = self
+        menu.addItem(quitItem)
     }
 }

@@ -15,11 +15,15 @@ targets:
   QuickRappel:
     type: application
     platform: macOS
-    sources: [App]
+    sources:
+      - App
+      - path: Resources
+        buildPhase: resources
     info:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: QuickRappel
+        CFBundleIconFile: AppIcon
         LSUIElement: true
         NSRemindersFullAccessUsageDescription: "QuickRappel affiche et enregistre vos rappels dans l'app Rappels."
         NSRemindersUsageDescription: "QuickRappel affiche et enregistre vos rappels dans l'app Rappels."

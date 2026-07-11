@@ -49,12 +49,6 @@ struct DeskletView: View {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(.white.opacity(0.12))
         )
-        .overlay(alignment: .bottomTrailing) {
-            if !panel.locked {
-                ResizeGrip()
-                    .padding(8)
-            }
-        }
         .simultaneousGesture(TapGesture().onEnded {
             NSApp.activate(ignoringOtherApps: true)
         })
@@ -237,49 +231,6 @@ struct DeskletView: View {
         guard !trimmed.isEmpty else { return }
         model.add(text: trimmed)
         text = ""
-    }
-}
-
-struct ResizeGrip: View {
-    @State private var startFrame: NSRect?
-    @State private var hovering = false
-
-    var body: some View {
-        Image(systemName: "arrow.up.left.and.arrow.down.right")
-            .font(.system(size: 9, weight: .bold))
-            .foregroundStyle(hovering ? Color.orange : Color.secondary.opacity(0.5))
-            .frame(width: 22, height: 22)
-            .contentShape(Rectangle())
-            .onHover { inside in
-                hovering = inside
-                if inside {
-                    if #available(macOS 15.0, *) {
-                        NSCursor.frameResize(position: .bottomRight, directions: .all).push()
-                    } else {
-                        NSCursor.crosshair.push()
-                    }
-                } else {
-                    NSCursor.pop()
-                }
-            }
-            .gesture(
-                DragGesture(minimumDistance: 0, coordinateSpace: .global)
-                    .onChanged { value in
-                        guard let window = PanelController.shared.window else { return }
-                        if startFrame == nil {
-                            startFrame = window.frame
-                        }
-                        guard let start = startFrame else { return }
-                        var frame = start
-                        frame.size.width = max(280, start.width + value.translation.width)
-                        frame.size.height = max(320, start.height + value.translation.height)
-                        frame.origin.y = start.origin.y - (frame.size.height - start.height)
-                        window.setFrame(frame, display: true)
-                    }
-                    .onEnded { _ in
-                        startFrame = nil
-                    }
-            )
     }
 }
 

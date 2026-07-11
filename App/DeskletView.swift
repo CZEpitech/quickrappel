@@ -4,6 +4,7 @@ import SwiftUI
 
 struct DeskletView: View {
     @StateObject private var model = ReminderViewModel()
+    @ObservedObject private var panel = PanelController.shared
     @State private var text = ""
     @FocusState private var focused: Bool
 
@@ -29,6 +30,15 @@ struct DeskletView: View {
         .simultaneousGesture(TapGesture().onEnded {
             NSApp.activate(ignoringOtherApps: true)
         })
+        .contextMenu {
+            Button(panel.locked ? "Déverrouiller la position" : "Verrouiller la position") {
+                panel.locked.toggle()
+            }
+            Divider()
+            Button("Quitter QuickRappel") {
+                NSApp.terminate(nil)
+            }
+        }
     }
 
     private var header: some View {

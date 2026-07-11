@@ -41,6 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.setFrameAutosaveName("QuickRappelDesklet")
         panel.makeKeyAndOrderFront(nil)
         window = panel
+        PanelController.shared.window = panel
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

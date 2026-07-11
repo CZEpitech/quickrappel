@@ -7,6 +7,17 @@ final class ReminderViewModel: ObservableObject {
     enum UndoAction {
         case completed(reminderID: String)
         case added(reminderID: String)
+        case deleted(snapshot: ReminderSnapshot)
+    }
+
+    struct ReminderSnapshot {
+        let title: String
+        let notes: String?
+        let dueDateComponents: DateComponents?
+        let isCompleted: Bool
+        let completionDate: Date?
+        let recurrenceRules: [EKRecurrenceRule]
+        let alarmDates: [Date]
     }
 
     @Published var reminders: [EKReminder] = []
@@ -118,6 +129,58 @@ final class ReminderViewModel: ObservableObject {
         }
     }
 
+    func delete(_ reminder: EKReminder) {
+        let snapshot = ReminderSnapshot(
+            title: reminder.title ?? "",
+            notes: reminder.notes,
+            dueDateComponents: reminder.dueDateComponents,
+            isCompleted: reminder.isCompleted,
+            completionDate: reminder.completionDate,
+            recurrenceRules: (reminder.recurrenceRules ?? []).map { rule in
+                EKRecurrenceRule(
+                    recurrenceWith: rule.frequency,
+                    interval: rule.interval,
+                    daysOfTheWeek: rule.daysOfTheWeek,
+                    daysOfTheMonth: rule.daysOfTheMonth,
+                    monthsOfTheYear: rule.monthsOfTheYear,
+                    weeksOfTheYear: rule.weeksOfTheYear,
+                    daysOfTheYear: rule.daysOfTheYear,
+                    setPositions: rule.setPositions,
+                    end: rule.recurrenceEnd
+                )
+            },
+            alarmDates: (reminder.alarms ?? []).compactMap { $0.absoluteDate }
+        )
+        do {
+            try store.remove(reminder, commit: true)
+            pushUndo(.deleted(snapshot: snapshot))
+            errorMessage = nil
+            fetch()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func recreate(from snapshot: ReminderSnapshot) {
+        let reminder = EKReminder(eventStore: store)
+        reminder.title = snapshot.title
+        reminder.notes = snapshot.notes
+        reminder.dueDateComponents = snapshot.dueDateComponents
+        snapshot.recurrenceRules.forEach { reminder.addRecurrenceRule($0) }
+        snapshot.alarmDates.forEach { reminder.addAlarm(EKAlarm(absoluteDate: $0)) }
+        reminder.calendar = store.defaultCalendarForNewReminders()
+        if snapshot.isCompleted {
+            reminder.isCompleted = true
+            reminder.completionDate = snapshot.completionDate
+        }
+        do {
+            try store.save(reminder, commit: true)
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func isInProgress(_ reminder: EKReminder) -> Bool {
         reminder.notes?.contains(Self.inProgressMarker) == true
     }
@@ -199,6 +262,8 @@ final class ReminderViewModel: ObservableObject {
             } catch {
                 errorMessage = error.localizedDescription
             }
+        case .deleted(let snapshot):
+            recreate(from: snapshot)
         }
         fetch()
     }

@@ -161,6 +161,13 @@ struct DeskletView: View {
                     HistoryRow(reminder: reminder) {
                         model.restore(reminder)
                     }
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            model.delete(reminder)
+                        } label: {
+                            Text(lang.t("Supprimer définitivement", "Delete permanently"))
+                        }
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -180,6 +187,13 @@ struct DeskletView: View {
                 ForEach(model.reminders, id: \.calendarItemIdentifier) { reminder in
                     ReminderRow(reminder: reminder, inProgress: model.isInProgress(reminder)) {
                         model.statusTapped(reminder)
+                    }
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            model.delete(reminder)
+                        } label: {
+                            Text(lang.t("Supprimer", "Delete"))
+                        }
                     }
                 }
             }

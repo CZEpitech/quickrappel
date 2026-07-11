@@ -5,10 +5,12 @@ options:
     macOS: "14.0"
 settings:
   base:
-    CODE_SIGN_IDENTITY: "-"
-    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "Apple Development"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: TY5QDFF2SB
     SWIFT_VERSION: "5.9"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
 targets:
   QuickRappel:
     type: application
@@ -31,6 +33,10 @@ targets:
     type: app-extension
     platform: macOS
     sources: [Widget]
+    entitlements:
+      path: Widget/QuickRappelWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
     info:
       path: Widget/Info.plist
       properties:

@@ -39,6 +39,10 @@ struct DeskletView: View {
             ) {
                 panel.locked.toggle()
             }
+            Button(action: { panel.overlay.toggle() }) {
+                if panel.overlay { Image(systemName: "checkmark") }
+                Text(lang.t("Toujours au premier plan", "Always on top"))
+            }
             Menu(lang.t("Langue", "Language")) {
                 Button(action: { lang.code = "fr" }) {
                     if lang.isFrench { Image(systemName: "checkmark") }

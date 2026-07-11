@@ -28,8 +28,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.backgroundColor = .clear
         panel.hasShadow = true
         panel.isMovableByWindowBackground = true
-        panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
-        panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         if !panel.setFrameUsingName("QuickRappelDesklet") {
             if let screen = NSScreen.main {
                 let frame = screen.visibleFrame
@@ -86,6 +84,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         PanelController.shared.locked.toggle()
     }
 
+    @objc private func toggleOverlay() {
+        PanelController.shared.overlay.toggle()
+    }
+
     @objc private func quit() {
         NSApp.terminate(nil)
     }
@@ -115,6 +117,15 @@ extension AppDelegate: NSMenuDelegate {
         lockItem.target = self
         lockItem.state = PanelController.shared.locked ? .on : .off
         menu.addItem(lockItem)
+
+        let overlayItem = NSMenuItem(
+            title: lang.t("Toujours au premier plan", "Always on top"),
+            action: #selector(toggleOverlay),
+            keyEquivalent: ""
+        )
+        overlayItem.target = self
+        overlayItem.state = PanelController.shared.overlay ? .on : .off
+        menu.addItem(overlayItem)
 
         let langRoot = NSMenuItem(title: lang.t("Langue", "Language"), action: nil, keyEquivalent: "")
         let langMenu = NSMenu()

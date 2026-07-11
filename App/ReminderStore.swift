@@ -48,6 +48,11 @@ enum ReminderStore {
                 from: date
             )
             reminder.addAlarm(EKAlarm(absoluteDate: date))
+        } else {
+            reminder.dueDateComponents = Calendar.current.dateComponents(
+                [.year, .month, .day],
+                from: Date()
+            )
         }
         reminder.title = title
         reminder.calendar = store.defaultCalendarForNewReminders()

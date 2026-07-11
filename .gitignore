@@ -1,3 +1,4 @@
 .build/
 QuickRappel.xcodeproj/
 .DS_Store
+App/Info.plist

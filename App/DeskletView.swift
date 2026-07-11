@@ -6,12 +6,14 @@ struct DeskletView: View {
     @ObservedObject private var model = ReminderViewModel.shared
     @ObservedObject private var panel = PanelController.shared
     @ObservedObject private var lang = Lang.shared
+    @ObservedObject private var game = GameState.shared
     @State private var text = ""
     @FocusState private var focused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
+            stats
             if let message = model.errorMessage {
                 Text(message)
                     .font(.caption)
@@ -79,6 +81,50 @@ struct DeskletView: View {
             Text("\(model.reminders.count)")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private var stats: some View {
+        HStack(spacing: 12) {
+            HStack(spacing: 4) {
+                Image(systemName: "star.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.yellow)
+                    .symbolEffect(.bounce, value: game.level)
+                Text(lang.t("Nv", "Lv") + " \(game.level)")
+                    .font(.system(size: 11, weight: .bold))
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(.white.opacity(0.1))
+                    Capsule()
+                        .fill(LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing))
+                        .frame(width: max(4, geo.size.width * game.levelProgress))
+                        .animation(.spring(duration: 0.4), value: game.levelProgress)
+                }
+            }
+            .frame(height: 6)
+            HStack(spacing: 3) {
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(game.displayStreak > 0 ? .orange : Color.secondary.opacity(0.5))
+                    .symbolEffect(.bounce, value: game.displayStreak)
+                Text("\(game.displayStreak)")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(game.displayStreak > 0 ? .primary : .secondary)
+            }
+            .help(lang.t("Jours consécutifs avec au moins une tâche faite", "Consecutive days with at least one task done"))
+            HStack(spacing: 3) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(game.doneToday > 0 ? .green : Color.secondary.opacity(0.5))
+                    .symbolEffect(.bounce, value: game.doneToday)
+                Text("\(game.doneToday)")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(game.doneToday > 0 ? .primary : .secondary)
+            }
+            .help(lang.t("Tâches faites aujourd'hui", "Tasks done today"))
         }
     }
 

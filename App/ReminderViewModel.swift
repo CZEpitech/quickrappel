@@ -95,6 +95,7 @@ final class ReminderViewModel: ObservableObject {
         do {
             try store.save(reminder, commit: true)
             pushUndo(.completed(reminderID: reminder.calendarItemIdentifier))
+            GameState.shared.taskCompleted()
             errorMessage = nil
             fetch()
         } catch {
@@ -111,6 +112,7 @@ final class ReminderViewModel: ObservableObject {
             reminder.isCompleted = false
             do {
                 try store.save(reminder, commit: true)
+                GameState.shared.taskUncompleted()
                 errorMessage = nil
             } catch {
                 errorMessage = error.localizedDescription

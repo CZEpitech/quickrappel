@@ -1,40 +1,8 @@
 import EventKit
 import Foundation
 
-enum ReminderStoreError: LocalizedError {
-    case accessDenied
-
-    var errorDescription: String? {
-        switch self {
-        case .accessDenied:
-            return "Accès refusé. Réglages Système > Confidentialité et sécurité > Rappels > autoriser QuickRappel."
-        }
-    }
-}
-
 enum ReminderStore {
-    static func save(text: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        let store = EKEventStore()
-        let handler: (Bool, Error?) -> Void = { granted, _ in
-            guard granted else {
-                completion(.failure(ReminderStoreError.accessDenied))
-                return
-            }
-            do {
-                try createReminder(text: text, store: store)
-                completion(.success(()))
-            } catch {
-                completion(.failure(error))
-            }
-        }
-        if #available(macOS 14.0, *) {
-            store.requestFullAccessToReminders(completion: handler)
-        } else {
-            store.requestAccess(to: .reminder, completion: handler)
-        }
-    }
-
-    private static func createReminder(text: String, store: EKEventStore) throws {
+    static func createReminder(text: String, store: EKEventStore) throws {
         let reminder = EKReminder(eventStore: store)
         var title = text
         if let (date, range) = detectDate(in: text) {

@@ -11,49 +11,40 @@ struct QuickRappelApp {
     }
 }
 
+final class PanelWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private var window: NSWindow?
+    private var window: PanelWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        showPanel()
-    }
-
-    func application(_ application: NSApplication, open urls: [URL]) {
-        showPanel()
+        let content = NSHostingController(rootView: DeskletView())
+        let panel = PanelWindow(contentViewController: content)
+        panel.styleMask = [.borderless, .fullSizeContentView]
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.isMovableByWindowBackground = true
+        panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
+        panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
+        if !panel.setFrameUsingName("QuickRappelDesklet") {
+            if let screen = NSScreen.main {
+                let frame = screen.visibleFrame
+                panel.setFrameOrigin(NSPoint(
+                    x: frame.maxX - panel.frame.width - 40,
+                    y: frame.maxY - panel.frame.height - 60
+                ))
+            }
+        }
+        panel.setFrameAutosaveName("QuickRappelDesklet")
+        panel.makeKeyAndOrderFront(nil)
+        window = panel
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        showPanel()
-        return true
-    }
-
-    private func showPanel() {
-        if window == nil {
-            let content = NSHostingController(rootView: CaptureView(onDone: {
-                NSApp.terminate(nil)
-            }))
-            let panel = NSWindow(contentViewController: content)
-            panel.styleMask = [.titled, .fullSizeContentView]
-            panel.titlebarAppearsTransparent = true
-            panel.titleVisibility = .hidden
-            panel.isMovableByWindowBackground = true
-            panel.level = .floating
-            panel.standardWindowButton(.closeButton)?.isHidden = true
-            panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
-            panel.standardWindowButton(.zoomButton)?.isHidden = true
-            window = panel
-        }
-        positionTopCenter()
-        NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
-    }
-
-    private func positionTopCenter() {
-        guard let window, let screen = NSScreen.main else { return }
-        let frame = screen.visibleFrame
-        let size = window.frame.size
-        let x = frame.midX - size.width / 2
-        let y = frame.maxY - size.height - frame.height * 0.18
-        window.setFrameOrigin(NSPoint(x: x, y: y))
+        return true
     }
 }

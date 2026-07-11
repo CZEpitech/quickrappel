@@ -13,6 +13,8 @@ final class ReminderViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var canUndo = false
 
+    private static let inProgressMarker = "#inprogress"
+
     private let store = EKEventStore()
     private var undoStack: [UndoAction] = []
 
@@ -59,7 +61,13 @@ final class ReminderViewModel: ObservableObject {
         )
         store.fetchReminders(matching: predicate) { [weak self] result in
             let calendar = Calendar.current
+            let marker = Self.inProgressMarker
             let sorted = (result ?? []).sorted { a, b in
+                let progressA = a.notes?.contains(marker) == true
+                let progressB = b.notes?.contains(marker) == true
+                if progressA != progressB {
+                    return progressA
+                }
                 let dateA = a.dueDateComponents.flatMap { calendar.date(from: $0) }
                 let dateB = b.dueDateComponents.flatMap { calendar.date(from: $0) }
                 switch (dateA, dateB) {
@@ -77,6 +85,40 @@ final class ReminderViewModel: ObservableObject {
                 self?.reminders = sorted
             }
         }
+    }
+
+    func isInProgress(_ reminder: EKReminder) -> Bool {
+        reminder.notes?.contains(Self.inProgressMarker) == true
+    }
+
+    func statusTapped(_ reminder: EKReminder) {
+        if isInProgress(reminder) {
+            setInProgressMarker(reminder, enabled: false)
+            complete(reminder)
+        } else {
+            setInProgressMarker(reminder, enabled: true)
+            do {
+                try store.save(reminder, commit: true)
+                errorMessage = nil
+                fetch()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func setInProgressMarker(_ reminder: EKReminder, enabled: Bool) {
+        var notes = reminder.notes ?? ""
+        if enabled {
+            if !notes.contains(Self.inProgressMarker) {
+                notes = notes.isEmpty ? Self.inProgressMarker : notes + "\n" + Self.inProgressMarker
+            }
+        } else {
+            notes = notes
+                .replacingOccurrences(of: Self.inProgressMarker, with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        reminder.notes = notes.isEmpty ? nil : notes
     }
 
     func add(text: String) {
@@ -110,6 +152,7 @@ final class ReminderViewModel: ObservableObject {
         case .completed(let reminderID):
             guard let reminder = store.calendarItem(withIdentifier: reminderID) as? EKReminder else { return }
             reminder.isCompleted = false
+            setInProgressMarker(reminder, enabled: true)
             do {
                 try store.save(reminder, commit: true)
                 GameState.shared.taskUncompleted()

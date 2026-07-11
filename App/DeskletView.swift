@@ -138,8 +138,8 @@ struct DeskletView: View {
                         .padding(.top, 8)
                 }
                 ForEach(model.reminders, id: \.calendarItemIdentifier) { reminder in
-                    ReminderRow(reminder: reminder) {
-                        model.complete(reminder)
+                    ReminderRow(reminder: reminder, inProgress: model.isInProgress(reminder)) {
+                        model.statusTapped(reminder)
                     }
                 }
             }
@@ -174,20 +174,26 @@ struct DeskletView: View {
 
 struct ReminderRow: View {
     let reminder: EKReminder
-    let onComplete: () -> Void
+    let inProgress: Bool
+    let onTap: () -> Void
 
     @ObservedObject private var lang = Lang.shared
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Button(action: onComplete) {
-                Image(systemName: "circle")
+            Button(action: onTap) {
+                Image(systemName: inProgress ? "circle.lefthalf.filled" : "circle")
                     .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(inProgress ? Color.orange : Color.secondary)
             }
             .buttonStyle(.plain)
+            .help(
+                inProgress
+                    ? lang.t("En cours - cliquer pour terminer", "In progress - click to complete")
+                    : lang.t("Cliquer pour passer en cours", "Click to mark in progress")
+            )
             Text(reminder.title ?? "")
-                .font(.system(size: 13))
+                .font(.system(size: 13, weight: inProgress ? .semibold : .regular))
                 .lineLimit(2)
             if reminder.hasRecurrenceRules {
                 Image(systemName: "repeat")

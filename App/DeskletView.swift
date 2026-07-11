@@ -123,6 +123,11 @@ struct ReminderRow: View {
             Text(reminder.title ?? "")
                 .font(.system(size: 13))
                 .lineLimit(2)
+            if reminder.hasRecurrenceRules {
+                Image(systemName: "repeat")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
             Spacer(minLength: 4)
             if let due = dueLabel {
                 Text(due.text)

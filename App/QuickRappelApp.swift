@@ -94,10 +94,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 extension AppDelegate: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
+        let lang = Lang.shared
 
         let visible = window?.isVisible ?? false
         let toggleItem = NSMenuItem(
-            title: visible ? "Masquer le panneau" : "Afficher le panneau",
+            title: visible
+                ? lang.t("Masquer le panneau", "Hide panel")
+                : lang.t("Afficher le panneau", "Show panel"),
             action: #selector(togglePanel),
             keyEquivalent: ""
         )
@@ -105,7 +108,7 @@ extension AppDelegate: NSMenuDelegate {
         menu.addItem(toggleItem)
 
         let lockItem = NSMenuItem(
-            title: "Verrouiller la position",
+            title: lang.t("Verrouiller la position", "Lock position"),
             action: #selector(toggleLock),
             keyEquivalent: ""
         )
@@ -113,14 +116,35 @@ extension AppDelegate: NSMenuDelegate {
         lockItem.state = PanelController.shared.locked ? .on : .off
         menu.addItem(lockItem)
 
+        let langRoot = NSMenuItem(title: lang.t("Langue", "Language"), action: nil, keyEquivalent: "")
+        let langMenu = NSMenu()
+        let frenchItem = NSMenuItem(title: "Français", action: #selector(setFrench), keyEquivalent: "")
+        frenchItem.target = self
+        frenchItem.state = lang.isFrench ? .on : .off
+        langMenu.addItem(frenchItem)
+        let englishItem = NSMenuItem(title: "English", action: #selector(setEnglish), keyEquivalent: "")
+        englishItem.target = self
+        englishItem.state = lang.isFrench ? .off : .on
+        langMenu.addItem(englishItem)
+        langRoot.submenu = langMenu
+        menu.addItem(langRoot)
+
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(
-            title: "Quitter QuickRappel",
+            title: lang.t("Quitter QuickRappel", "Quit QuickRappel"),
             action: #selector(quit),
             keyEquivalent: "q"
         )
         quitItem.target = self
         menu.addItem(quitItem)
+    }
+
+    @objc private func setFrench() {
+        Lang.shared.code = "fr"
+    }
+
+    @objc private func setEnglish() {
+        Lang.shared.code = "en"
     }
 }

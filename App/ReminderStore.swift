@@ -9,7 +9,14 @@ enum ReminderStore {
         "jeudi": .thursday,
         "vendredi": .friday,
         "samedi": .saturday,
-        "dimanche": .sunday
+        "dimanche": .sunday,
+        "monday": .monday,
+        "tuesday": .tuesday,
+        "wednesday": .wednesday,
+        "thursday": .thursday,
+        "friday": .friday,
+        "saturday": .saturday,
+        "sunday": .sunday
     ]
 
     @discardableResult
@@ -49,7 +56,7 @@ enum ReminderStore {
             }
         }
         if title.isEmpty {
-            title = "Rappel"
+            title = Lang.shared.t("Rappel", "Reminder")
         }
         reminder.title = title
 

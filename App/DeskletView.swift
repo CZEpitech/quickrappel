@@ -5,6 +5,7 @@ import SwiftUI
 struct DeskletView: View {
     @ObservedObject private var model = ReminderViewModel.shared
     @ObservedObject private var panel = PanelController.shared
+    @ObservedObject private var lang = Lang.shared
     @State private var text = ""
     @FocusState private var focused: Bool
 
@@ -31,11 +32,25 @@ struct DeskletView: View {
             NSApp.activate(ignoringOtherApps: true)
         })
         .contextMenu {
-            Button(panel.locked ? "Déverrouiller la position" : "Verrouiller la position") {
+            Button(
+                panel.locked
+                    ? lang.t("Déverrouiller la position", "Unlock position")
+                    : lang.t("Verrouiller la position", "Lock position")
+            ) {
                 panel.locked.toggle()
             }
+            Menu(lang.t("Langue", "Language")) {
+                Button(action: { lang.code = "fr" }) {
+                    if lang.isFrench { Image(systemName: "checkmark") }
+                    Text("Français")
+                }
+                Button(action: { lang.code = "en" }) {
+                    if !lang.isFrench { Image(systemName: "checkmark") }
+                    Text("English")
+                }
+            }
             Divider()
-            Button("Quitter QuickRappel") {
+            Button(lang.t("Quitter QuickRappel", "Quit QuickRappel")) {
                 NSApp.terminate(nil)
             }
         }
@@ -46,7 +61,7 @@ struct DeskletView: View {
             Image(systemName: "checklist")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.orange)
-            Text("Rappels")
+            Text(lang.t("Rappels", "Reminders"))
                 .font(.system(size: 15, weight: .bold))
             Spacer()
             Button(action: { model.undo() }) {
@@ -56,7 +71,7 @@ struct DeskletView: View {
             .buttonStyle(.plain)
             .foregroundStyle(model.canUndo ? Color.orange : Color.secondary.opacity(0.4))
             .disabled(!model.canUndo)
-            .help("Annuler la dernière action (Cmd+Z)")
+            .help(lang.t("Annuler la dernière action (Cmd+Z)", "Undo last action (Cmd+Z)"))
             Text("\(model.reminders.count)")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.secondary)
@@ -67,7 +82,7 @@ struct DeskletView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 4) {
                 if model.reminders.isEmpty {
-                    Text("Rien à faire.")
+                    Text(lang.t("Rien à faire.", "Nothing to do."))
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                         .padding(.top, 8)
@@ -81,7 +96,6 @@ struct DeskletView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxHeight: .infinity)
-
     }
 
     private var input: some View {
@@ -89,7 +103,7 @@ struct DeskletView: View {
             Image(systemName: "plus.circle.fill")
                 .font(.system(size: 16))
                 .foregroundStyle(.orange)
-            TextField("Nouveau rappel...", text: $text)
+            TextField(lang.t("Nouveau rappel...", "New reminder..."), text: $text)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
                 .focused($focused)
@@ -111,6 +125,8 @@ struct DeskletView: View {
 struct ReminderRow: View {
     let reminder: EKReminder
     let onComplete: () -> Void
+
+    @ObservedObject private var lang = Lang.shared
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
@@ -148,20 +164,20 @@ struct ReminderRow: View {
         }
         let hasTime = components.hour != nil
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = Locale(identifier: lang.localeIdentifier)
         if calendar.isDateInToday(date) {
             if hasTime {
                 formatter.dateFormat = "HH:mm"
                 return (formatter.string(from: date), date < Date() ? .red : .secondary)
             }
-            return ("auj.", .secondary)
+            return (lang.t("auj.", "today"), .secondary)
         }
         if date < calendar.startOfDay(for: Date()) {
             formatter.dateFormat = "d MMM"
             return (formatter.string(from: date), .red)
         }
         if calendar.isDateInTomorrow(date) {
-            return ("demain", .secondary)
+            return (lang.t("demain", "tomorrow"), .secondary)
         }
         formatter.dateFormat = "d MMM"
         return (formatter.string(from: date), .secondary)

@@ -37,7 +37,10 @@ final class ReminderViewModel: ObservableObject {
                 if granted {
                     self.fetch()
                 } else {
-                    self.errorMessage = "Accès refusé. Réglages Système > Confidentialité et sécurité > Rappels."
+                    self.errorMessage = Lang.shared.t(
+                        "Accès refusé. Réglages Système > Confidentialité et sécurité > Rappels.",
+                        "Access denied. System Settings > Privacy & Security > Reminders."
+                    )
                 }
             }
         }

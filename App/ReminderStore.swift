@@ -5,12 +5,16 @@ enum ReminderStore {
     @discardableResult
     static func createReminder(text: String, store: EKEventStore) throws -> EKReminder {
         let reminder = EKReminder(eventStore: store)
-        var title = text
-        if let (date, range) = detectDate(in: text) {
+        let recurring = text.hasPrefix("!")
+        let body = recurring
+            ? String(text.dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
+            : text
+        var title = body
+        if let (date, range) = detectDate(in: body) {
             title.removeSubrange(range)
             title = title.trimmingCharacters(in: .whitespacesAndNewlines)
             if title.isEmpty {
-                title = text
+                title = body
             }
             reminder.dueDateComponents = Calendar.current.dateComponents(
                 [.year, .month, .day, .hour, .minute],
@@ -24,6 +28,11 @@ enum ReminderStore {
             )
         }
         reminder.title = title
+        if recurring {
+            reminder.addRecurrenceRule(
+                EKRecurrenceRule(recurrenceWith: .daily, interval: 1, end: nil)
+            )
+        }
         reminder.calendar = store.defaultCalendarForNewReminders()
         try store.save(reminder, commit: true)
         return reminder

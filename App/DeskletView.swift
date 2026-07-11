@@ -8,20 +8,31 @@ struct DeskletView: View {
     @ObservedObject private var lang = Lang.shared
     @ObservedObject private var game = GameState.shared
     @State private var text = ""
+    @State private var tab: PanelTab = .active
     @FocusState private var focused: Bool
+
+    enum PanelTab {
+        case active
+        case history
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
             stats
+            tabs
             if let message = model.errorMessage {
                 Text(message)
                     .font(.caption)
                     .foregroundStyle(.red)
                     .lineLimit(3)
             }
-            list
-            input
+            if tab == .active {
+                list
+                input
+            } else {
+                history
+            }
         }
         .padding(16)
         .frame(width: 340, height: 440, alignment: .top)
@@ -128,6 +139,35 @@ struct DeskletView: View {
         }
     }
 
+    private var tabs: some View {
+        Picker("", selection: $tab) {
+            Text(lang.t("Tâches", "Tasks")).tag(PanelTab.active)
+            Text(lang.t("Historique", "History")).tag(PanelTab.history)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+    }
+
+    private var history: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 4) {
+                if model.completed.isEmpty {
+                    Text(lang.t("Aucune tâche complétée.", "No completed tasks."))
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 8)
+                }
+                ForEach(model.completed, id: \.calendarItemIdentifier) { reminder in
+                    HistoryRow(reminder: reminder) {
+                        model.restore(reminder)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxHeight: .infinity)
+    }
+
     private var list: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 4) {
@@ -169,6 +209,49 @@ struct DeskletView: View {
         guard !trimmed.isEmpty else { return }
         model.add(text: trimmed)
         text = ""
+    }
+}
+
+struct HistoryRow: View {
+    let reminder: EKReminder
+    let onRestore: () -> Void
+
+    @ObservedObject private var lang = Lang.shared
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Button(action: onRestore) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.green)
+            }
+            .buttonStyle(.plain)
+            .help(lang.t("Remettre dans les tâches", "Put back into tasks"))
+            Text(reminder.title ?? "")
+                .font(.system(size: 13))
+                .strikethrough()
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+            Spacer(minLength: 4)
+            if let date = reminder.completionDate {
+                Text(completionLabel(date))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func completionLabel(_ date: Date) -> String {
+        let calendar = Calendar.current
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: lang.localeIdentifier)
+        if calendar.isDateInToday(date) {
+            formatter.dateFormat = "HH:mm"
+        } else {
+            formatter.dateFormat = "d MMM"
+        }
+        return formatter.string(from: date)
     }
 }
 

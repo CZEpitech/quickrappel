@@ -10,6 +10,7 @@ final class ReminderViewModel: ObservableObject {
     }
 
     @Published var reminders: [EKReminder] = []
+    @Published var completed: [EKReminder] = []
     @Published var errorMessage: String?
     @Published var canUndo = false
 
@@ -84,6 +85,36 @@ final class ReminderViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self?.reminders = sorted
             }
+        }
+        fetchCompleted()
+    }
+
+    private func fetchCompleted() {
+        let predicate = store.predicateForCompletedReminders(
+            withCompletionDateStarting: nil,
+            ending: nil,
+            calendars: nil
+        )
+        store.fetchReminders(matching: predicate) { [weak self] result in
+            let sorted = (result ?? []).sorted {
+                ($0.completionDate ?? .distantPast) > ($1.completionDate ?? .distantPast)
+            }
+            DispatchQueue.main.async {
+                self?.completed = Array(sorted.prefix(100))
+            }
+        }
+    }
+
+    func restore(_ reminder: EKReminder) {
+        reminder.isCompleted = false
+        setInProgressMarker(reminder, enabled: false)
+        do {
+            try store.save(reminder, commit: true)
+            GameState.shared.taskUncompleted()
+            errorMessage = nil
+            fetch()
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 

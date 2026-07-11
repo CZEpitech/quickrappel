@@ -1,0 +1,39 @@
+name: QuickRappel
+options:
+  bundleIdPrefix: com.czsyn
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_STYLE: Manual
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+targets:
+  QuickRappel:
+    type: application
+    platform: macOS
+    sources: [App]
+    dependencies:
+      - target: QuickRappelWidget
+        embed: true
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: QuickRappel
+        LSUIElement: true
+        NSRemindersFullAccessUsageDescription: "QuickRappel enregistre vos rappels dans l'app Rappels."
+        NSRemindersUsageDescription: "QuickRappel enregistre vos rappels dans l'app Rappels."
+        CFBundleURLTypes:
+          - CFBundleURLName: com.czsyn.quickrappel
+            CFBundleURLSchemes: [quickrappel]
+  QuickRappelWidget:
+    type: app-extension
+    platform: macOS
+    sources: [Widget]
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: QuickRappel Widget
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension

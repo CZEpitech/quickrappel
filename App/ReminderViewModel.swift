@@ -2,12 +2,21 @@ import EventKit
 import Foundation
 
 final class ReminderViewModel: ObservableObject {
+    static let shared = ReminderViewModel()
+
+    enum UndoAction {
+        case completed(reminderID: String)
+        case added(reminderID: String)
+    }
+
     @Published var reminders: [EKReminder] = []
     @Published var errorMessage: String?
+    @Published var canUndo = false
 
     private let store = EKEventStore()
+    private var undoStack: [UndoAction] = []
 
-    init() {
+    private init() {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(storeChanged),
@@ -69,7 +78,8 @@ final class ReminderViewModel: ObservableObject {
 
     func add(text: String) {
         do {
-            try ReminderStore.createReminder(text: text, store: store)
+            let reminder = try ReminderStore.createReminder(text: text, store: store)
+            pushUndo(.added(reminderID: reminder.calendarItemIdentifier))
             errorMessage = nil
             fetch()
         } catch {
@@ -81,10 +91,44 @@ final class ReminderViewModel: ObservableObject {
         reminder.isCompleted = true
         do {
             try store.save(reminder, commit: true)
+            pushUndo(.completed(reminderID: reminder.calendarItemIdentifier))
             errorMessage = nil
             fetch()
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    func undo() {
+        guard let action = undoStack.popLast() else { return }
+        canUndo = !undoStack.isEmpty
+        switch action {
+        case .completed(let reminderID):
+            guard let reminder = store.calendarItem(withIdentifier: reminderID) as? EKReminder else { return }
+            reminder.isCompleted = false
+            do {
+                try store.save(reminder, commit: true)
+                errorMessage = nil
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        case .added(let reminderID):
+            guard let reminder = store.calendarItem(withIdentifier: reminderID) as? EKReminder else { return }
+            do {
+                try store.remove(reminder, commit: true)
+                errorMessage = nil
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+        fetch()
+    }
+
+    private func pushUndo(_ action: UndoAction) {
+        undoStack.append(action)
+        if undoStack.count > 20 {
+            undoStack.removeFirst()
+        }
+        canUndo = true
     }
 }

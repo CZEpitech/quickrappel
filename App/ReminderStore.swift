@@ -2,7 +2,8 @@ import EventKit
 import Foundation
 
 enum ReminderStore {
-    static func createReminder(text: String, store: EKEventStore) throws {
+    @discardableResult
+    static func createReminder(text: String, store: EKEventStore) throws -> EKReminder {
         let reminder = EKReminder(eventStore: store)
         var title = text
         if let (date, range) = detectDate(in: text) {
@@ -25,6 +26,7 @@ enum ReminderStore {
         reminder.title = title
         reminder.calendar = store.defaultCalendarForNewReminders()
         try store.save(reminder, commit: true)
+        return reminder
     }
 
     private static func detectDate(in text: String) -> (Date, Range<String.Index>)? {

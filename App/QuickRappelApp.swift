@@ -44,6 +44,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window = panel
         PanelController.shared.window = panel
         setupStatusItem()
+        setupUndoShortcut()
+    }
+
+    private func setupUndoShortcut() {
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            let isUndoKey = event.charactersIgnoringModifiers?.lowercased() == "z"
+            if isUndoKey && (modifiers == .command || modifiers == .control) {
+                ReminderViewModel.shared.undo()
+                return nil
+            }
+            return event
+        }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

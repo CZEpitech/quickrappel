@@ -3,7 +3,7 @@ import EventKit
 import SwiftUI
 
 struct DeskletView: View {
-    @StateObject private var model = ReminderViewModel()
+    @ObservedObject private var model = ReminderViewModel.shared
     @ObservedObject private var panel = PanelController.shared
     @State private var text = ""
     @FocusState private var focused: Bool
@@ -49,6 +49,14 @@ struct DeskletView: View {
             Text("Rappels")
                 .font(.system(size: 15, weight: .bold))
             Spacer()
+            Button(action: { model.undo() }) {
+                Image(systemName: "arrow.uturn.backward")
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(model.canUndo ? Color.orange : Color.secondary.opacity(0.4))
+            .disabled(!model.canUndo)
+            .help("Annuler la dernière action (Cmd+Z)")
             Text("\(model.reminders.count)")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.secondary)

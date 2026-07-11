@@ -35,7 +35,15 @@ struct DeskletView: View {
             }
         }
         .padding(16)
-        .frame(width: 340, height: 440, alignment: .top)
+        .frame(
+            minWidth: 280,
+            idealWidth: 340,
+            maxWidth: .infinity,
+            minHeight: 320,
+            idealHeight: 440,
+            maxHeight: .infinity,
+            alignment: .top
+        )
         .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(.ultraThinMaterial))
         .overlay(
             RoundedRectangle(cornerRadius: 22, style: .continuous)

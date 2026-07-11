@@ -34,6 +34,11 @@ final class PanelController: ObservableObject {
         guard let window else { return }
         window.isMovableByWindowBackground = !locked
         window.isMovable = !locked
+        if locked {
+            window.styleMask.remove(.resizable)
+        } else {
+            window.styleMask.insert(.resizable)
+        }
         if overlay {
             window.level = .floating
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]

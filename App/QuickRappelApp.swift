@@ -23,11 +23,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let content = NSHostingController(rootView: DeskletView())
         let panel = PanelWindow(contentViewController: content)
-        panel.styleMask = [.borderless, .fullSizeContentView]
+        panel.styleMask = [.borderless, .fullSizeContentView, .resizable]
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
         panel.isMovableByWindowBackground = true
+        panel.contentMinSize = NSSize(width: 280, height: 320)
+        panel.setContentSize(NSSize(width: 340, height: 440))
         if !panel.setFrameUsingName("QuickRappelDesklet") {
             if let screen = NSScreen.main {
                 let frame = screen.visibleFrame

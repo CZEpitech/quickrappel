@@ -17,6 +17,62 @@ struct DeskletView: View {
     }
 
     var body: some View {
+        content
+            .background(
+                RoundedRectangle(cornerRadius: panel.compact ? 14 : 22, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: panel.compact ? 14 : 22, style: .continuous)
+                    .strokeBorder(.white.opacity(0.12))
+            )
+            .modifier(PanelInteractions(panel: panel, lang: lang))
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if panel.compact {
+            compactBar
+        } else {
+            fullContent
+        }
+    }
+
+    private var compactBar: some View {
+        HStack(spacing: 8) {
+            Button(action: { panel.compact = false }) {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.orange)
+            }
+            .buttonStyle(.plain)
+            .help(lang.t("Agrandir le panneau", "Expand panel"))
+            Image(systemName: "checklist")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.orange)
+            Text("\(model.reminders.count)")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.secondary)
+            TextField(lang.t("Nouveau rappel...", "New reminder..."), text: $text)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12))
+                .focused($focused)
+                .onSubmit(submit)
+            if game.displayStreak > 0 {
+                HStack(spacing: 2) {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.orange)
+                    Text("\(game.displayStreak)")
+                        .font(.system(size: 11, weight: .bold))
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .frame(minWidth: 280, maxWidth: .infinity, minHeight: 48, maxHeight: 48)
+    }
+
+    private var fullContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
             stats
@@ -44,43 +100,53 @@ struct DeskletView: View {
             maxHeight: .infinity,
             alignment: .top
         )
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(.ultraThinMaterial))
-        .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(.white.opacity(0.12))
-        )
-        .simultaneousGesture(TapGesture().onEnded {
-            NSApp.activate(ignoringOtherApps: true)
-        })
-        .contextMenu {
-            Button(
-                panel.locked
-                    ? lang.t("Déverrouiller la position", "Unlock position")
-                    : lang.t("Verrouiller la position", "Lock position")
-            ) {
-                panel.locked.toggle()
-            }
-            Button(action: { panel.overlay.toggle() }) {
-                if panel.overlay { Image(systemName: "checkmark") }
-                Text(lang.t("Toujours au premier plan", "Always on top"))
-            }
-            Menu(lang.t("Langue", "Language")) {
-                Button(action: { lang.code = "fr" }) {
-                    if lang.isFrench { Image(systemName: "checkmark") }
-                    Text("Français")
-                }
-                Button(action: { lang.code = "en" }) {
-                    if !lang.isFrench { Image(systemName: "checkmark") }
-                    Text("English")
-                }
-            }
-            Divider()
-            Button(lang.t("Quitter QuickRappel", "Quit QuickRappel")) {
-                NSApp.terminate(nil)
-            }
-        }
     }
+}
 
+struct PanelInteractions: ViewModifier {
+    @ObservedObject var panel: PanelController
+    @ObservedObject var lang: Lang
+
+    func body(content: Content) -> some View {
+        content
+            .simultaneousGesture(TapGesture().onEnded {
+                NSApp.activate(ignoringOtherApps: true)
+            })
+            .contextMenu {
+                Button(
+                    panel.locked
+                        ? lang.t("Déverrouiller la position", "Unlock position")
+                        : lang.t("Verrouiller la position", "Lock position")
+                ) {
+                    panel.locked.toggle()
+                }
+                Button(action: { panel.overlay.toggle() }) {
+                    if panel.overlay { Image(systemName: "checkmark") }
+                    Text(lang.t("Toujours au premier plan", "Always on top"))
+                }
+                Button(action: { panel.compact.toggle() }) {
+                    if panel.compact { Image(systemName: "checkmark") }
+                    Text(lang.t("Mode compact", "Compact mode"))
+                }
+                Menu(lang.t("Langue", "Language")) {
+                    Button(action: { lang.code = "fr" }) {
+                        if lang.isFrench { Image(systemName: "checkmark") }
+                        Text("Français")
+                    }
+                    Button(action: { lang.code = "en" }) {
+                        if !lang.isFrench { Image(systemName: "checkmark") }
+                        Text("English")
+                    }
+                }
+                Divider()
+                Button(lang.t("Quitter QuickRappel", "Quit QuickRappel")) {
+                    NSApp.terminate(nil)
+                }
+            }
+    }
+}
+
+extension DeskletView {
     private var header: some View {
         HStack(spacing: 8) {
             Image(systemName: "checklist")
@@ -89,6 +155,13 @@ struct DeskletView: View {
             Text(lang.t("Rappels", "Reminders"))
                 .font(.system(size: 15, weight: .bold))
             Spacer()
+            Button(action: { panel.compact = true }) {
+                Image(systemName: "chevron.up")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help(lang.t("Mode compact", "Compact mode"))
             Button(action: { model.undo() }) {
                 Image(systemName: "arrow.uturn.backward")
                     .font(.system(size: 12, weight: .semibold))

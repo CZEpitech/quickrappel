@@ -90,6 +90,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         PanelController.shared.overlay.toggle()
     }
 
+    @objc private func toggleCompact() {
+        PanelController.shared.compact.toggle()
+    }
+
     @objc private func quit() {
         NSApp.terminate(nil)
     }
@@ -128,6 +132,15 @@ extension AppDelegate: NSMenuDelegate {
         overlayItem.target = self
         overlayItem.state = PanelController.shared.overlay ? .on : .off
         menu.addItem(overlayItem)
+
+        let compactItem = NSMenuItem(
+            title: lang.t("Mode compact", "Compact mode"),
+            action: #selector(toggleCompact),
+            keyEquivalent: ""
+        )
+        compactItem.target = self
+        compactItem.state = PanelController.shared.compact ? .on : .off
+        menu.addItem(compactItem)
 
         let langRoot = NSMenuItem(title: lang.t("Langue", "Language"), action: nil, keyEquivalent: "")
         let langMenu = NSMenu()
